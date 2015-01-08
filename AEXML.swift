@@ -30,6 +30,7 @@ public class AEXMLElement {
     
     public let name: String
     public var value: String
+    public var namespaceURI: String?
     public private(set) var attributes: [NSObject : AnyObject]
     
     public private(set) weak var parent: AEXMLElement?
@@ -196,6 +197,7 @@ public class AEXMLDocument: AEXMLElement {
     public let version: Double
     public let encoding: String
     public let standalone: String
+    public var processNamespaces: Bool
     
     public var rootElement: AEXMLElement {
         return children.count == 1 ? children.first! : AEXMLElement("error", value: "document does not have root element")
@@ -203,16 +205,17 @@ public class AEXMLDocument: AEXMLElement {
     
     // MARK: Lifecycle
     
-    public init(version: Double = 1.0, encoding: String = "utf-8", standalone: String = "no") {
+    public init(version: Double = 1.0, encoding: String = "utf-8", standalone: String = "no", processNamespaces: Bool = false) {
         self.version = version
         self.encoding = encoding
         self.standalone = standalone
+        self.processNamespaces = processNamespaces
         super.init("AEXMLDocumentRoot")
         parent = nil
     }
     
-    public convenience init?(version: Double = 1.0, encoding: String = "utf-8", standalone: String = "no", xmlData: NSData, inout error: NSError?) {
-        self.init(version: version, encoding: encoding, standalone: standalone)
+    public convenience init?(version: Double = 1.0, encoding: String = "utf-8", standalone: String = "no", xmlData: NSData, processNamespaces: Bool = false, inout error: NSError?) {
+        self.init(version: version, encoding: encoding, standalone: standalone, processNamespaces: processNamespaces)
         if let parseError = readXMLData(xmlData) {
             error = parseError
             return nil
@@ -223,7 +226,7 @@ public class AEXMLDocument: AEXMLElement {
     
     public func readXMLData(data: NSData) -> NSError? {
         children.removeAll(keepCapacity: false)
-        let xmlParser = AEXMLParser(xmlDocument: self, xmlData: data)
+        let xmlParser = AEXMLParser(xmlDocument: self, xmlData: data, processNamespaces: processNamespaces)
         return xmlParser.tryParsing() ?? nil
     }
     
@@ -252,13 +255,15 @@ private class AEXMLParser: NSObject, NSXMLParserDelegate {
     var currentElement: AEXMLElement?
     var currentValue = String()
     var parseError: NSError?
+    var processNamespaces: Bool
     
     // MARK: Lifecycle
     
-    init(xmlDocument: AEXMLDocument, xmlData: NSData) {
+    init(xmlDocument: AEXMLDocument, xmlData: NSData, processNamespaces: Bool = false) {
         self.xmlDocument = xmlDocument
         self.xmlData = xmlData
         currentParent = xmlDocument
+        self.processNamespaces = processNamespaces
         super.init()
     }
     
@@ -268,6 +273,7 @@ private class AEXMLParser: NSObject, NSXMLParserDelegate {
         var success = false
         let parser = NSXMLParser(data: xmlData)
         parser.delegate = self
+        parser.shouldProcessNamespaces = self.processNamespaces
         success = parser.parse()
         return success ? nil : parseError
     }
@@ -276,6 +282,7 @@ private class AEXMLParser: NSObject, NSXMLParserDelegate {
     
     func parser(parser: NSXMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [NSObject : AnyObject]) {
         currentValue = String()
+        currentElement?.namespaceURI = namespaceURI
         currentElement = currentParent?.addChild(elementName, attributes: attributeDict)
         currentParent = currentElement
     }
