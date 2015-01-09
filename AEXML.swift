@@ -282,8 +282,8 @@ private class AEXMLParser: NSObject, NSXMLParserDelegate {
     
     func parser(parser: NSXMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [NSObject : AnyObject]) {
         currentValue = String()
-        currentElement?.namespaceURI = namespaceURI
         currentElement = currentParent?.addChild(elementName, attributes: attributeDict)
+        currentElement?.namespaceURI = namespaceURI
         currentParent = currentElement
     }
     
