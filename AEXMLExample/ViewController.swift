@@ -29,57 +29,64 @@ class ViewController: UIViewController {
                     println(xmlDoc.xmlString)
                     
                     // prints cats, dogs
-                    for child in xmlDoc.rootElement.children {
+                    for child in xmlDoc.root.children {
                         println(child.name)
                     }
                     
-                    // prints Tinna (first element)
-                    println(xmlDoc.rootElement["cats"]["cat"].value)
+                    // prints Optional("Tinna") (first element)
+                    println(xmlDoc.root["cats"]["cat"].value)
                     
-                    // prints Kika (last element)
-                    println(xmlDoc.rootElement["dogs"]["dog"].last.value)
+                    // prints Tinna (first element)
+                    println(xmlDoc.root["cats"]["cat"].stringValue)
+                    
+                    // prints Optional("Kika") (last element)
+                    println(xmlDoc.root["dogs"]["dog"].last?.value)
                     
                     // prints Betty (3rd element)
-                    println(xmlDoc.rootElement["dogs"].children[2].value)
+                    println(xmlDoc.root["dogs"].children[2].stringValue)
                     
                     // prints Tinna, Rose, Caesar
-                    for cat in xmlDoc.rootElement["cats"]["cat"].all {
-                        println(cat.value)
+                    if let cats = xmlDoc.root["cats"]["cat"].all {
+                        for cat in cats {
+                            if let name = cat.value {
+                                println(name)
+                            }
+                        }
                     }
                     
                     // prints Villy, Spot
-                    for dog in xmlDoc.rootElement["dogs"]["dog"].all {
-                        if let color = dog.attributes["color"] as? NSString {
+                    for dog in xmlDoc.root["dogs"]["dog"].all! {
+                        if let color = dog.attributes["color"] as? String {
                             if color == "white" {
-                                println(dog.value)
+                                println(dog.stringValue)
                             }
                         }
                     }
                     
                     // prints Caesar
-                    if let cats = xmlDoc.rootElement["cats"]["cat"].allWithAttributes(["breed" : "Domestic", "color" : "yellow"]) {
+                    if let cats = xmlDoc.root["cats"]["cat"].allWithAttributes(["breed" : "Domestic", "color" : "yellow"]) {
                         for cat in cats {
-                            println(cat.value)
+                            println(cat.stringValue)
                         }
                     }
                     
-                    // prints 3
-                    println(xmlDoc.rootElement["cats"]["cat"].count)
+                    // prints 4
+                    println(xmlDoc.root["cats"]["cat"].count)
                     
                     // prints 2
-                    println(xmlDoc.rootElement["dogs"]["dog"].countWithAttributes(["breed" : "Bull Terrier"]))
+                    println(xmlDoc.root["dogs"]["dog"].countWithAttributes(["breed" : "Bull Terrier"]))
                     
                     // prints 1
-                    println(xmlDoc.rootElement["cats"]["cat"].countWithAttributes(["breed" : "Domestic", "color" : "darkgray"]))
+                    println(xmlDoc.root["cats"]["cat"].countWithAttributes(["breed" : "Domestic", "color" : "darkgray"]))
                     
                     // prints Siberian
-                    println(xmlDoc.rootElement["cats"]["cat"].attributes["breed"]!)
+                    println(xmlDoc.root["cats"]["cat"].attributes["breed"]!)
                     
                     // prints <cat breed="Siberian" color="lightgray">Tinna</cat>
-                    println(xmlDoc.rootElement["cats"]["cat"].xmlStringCompact)
+                    println(xmlDoc.root["cats"]["cat"].xmlStringCompact)
                     
                     // prints element <badexample> not found
-                    println(xmlDoc["badexample"]["notexisting"].value)
+                    println(xmlDoc["badexample"]["notexisting"].stringValue)
                     
                 } else {
                     println("description: \(error?.localizedDescription)\ninfo: \(error?.userInfo)")
@@ -98,8 +105,8 @@ class ViewController: UIViewController {
                 if let doc = AEXMLDocument(xmlData: data, error: &error) {
                     var parsedText = String()
                     // parse known structure
-                    for plant in doc["CATALOG"]["PLANT"].all {
-                        parsedText += plant["COMMON"].value + "\n"
+                    for plant in doc["CATALOG"]["PLANT"].all! {
+                        parsedText += plant["COMMON"].stringValue + "\n"
                     }
                     textView.text = parsedText
                 } else {
@@ -115,12 +122,12 @@ class ViewController: UIViewController {
         // sample SOAP request
         let soapRequest = AEXMLDocument()
         let attributes = ["xmlns:xsi" : "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd" : "http://www.w3.org/2001/XMLSchema"]
-        let envelope = soapRequest.addChild("soap:Envelope", attributes: attributes)
-        let header = envelope.addChild("soap:Header")
-        let body = envelope.addChild("soap:Body")
-        header.addChild("m:Trans", value: "234", attributes: ["xmlns:m" : "http://www.w3schools.com/transaction/", "soap:mustUnderstand" : "1"])
-        let getStockPrice = body.addChild("m:GetStockPrice")
-        getStockPrice.addChild("m:StockName", value: "AAPL")
+        let envelope = soapRequest.addChild(name: "soap:Envelope", attributes: attributes)
+        let header = envelope.addChild(name: "soap:Header")
+        let body = envelope.addChild(name: "soap:Body")
+        header.addChild(name: "m:Trans", value: "234", attributes: ["xmlns:m" : "http://www.w3schools.com/transaction/", "soap:mustUnderstand" : "1"])
+        let getStockPrice = body.addChild(name: "m:GetStockPrice")
+        getStockPrice.addChild(name: "m:StockName", value: "AAPL")
         textView.text = soapRequest.xmlString
     }
     
@@ -136,7 +143,7 @@ class ViewController: UIViewController {
                 if let doc = AEXMLDocument(xmlData: data, error: &error) {
                     var parsedText = String()
                     // parse unknown structure
-                    for child in doc.rootElement.children {
+                    for child in doc.root.children {
                         parsedText += child.xmlString + "\n"
                     }
                     textView.text = parsedText
