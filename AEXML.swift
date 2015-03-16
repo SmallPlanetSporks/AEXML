@@ -138,7 +138,7 @@ public class AEXMLElement {
     private var parentsCount: Int {
         var count = 0
         var element = self
-        while let parent = element.parent? {
+        while let parent = element.parent {
             count++
             element = parent
         }
@@ -263,7 +263,7 @@ public class AEXMLDocument: AEXMLElement {
 
 // MARK: -
 
-private class AEXMLParser: NSObject, NSXMLParserDelegate {
+class AEXMLParser: NSObject, NSXMLParserDelegate {
     
     // MARK: Properties
     
@@ -306,13 +306,15 @@ private class AEXMLParser: NSObject, NSXMLParserDelegate {
         currentParent = currentElement
     }
     
-    func parser(parser: NSXMLParser, foundCharacters string: String) {
-        currentValue += string
-        let newValue = currentValue.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
-        currentElement?.value = newValue == String() ? nil : newValue
+    func parser(parser: NSXMLParser, foundCharacters string: String?) {
+        if string != nil {
+            currentValue += string!
+            let newValue = currentValue.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
+            currentElement?.value = newValue == String() ? nil : newValue
+        }
     }
     
-    func parser(parser: NSXMLParser!, didEndElement elementName: String!, namespaceURI: String!, qualifiedName qName: String!) {
+    func parser(parser: NSXMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
         currentParent = currentParent?.parent
     }
     
