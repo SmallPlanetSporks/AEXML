@@ -40,10 +40,10 @@ public class AEXMLElement {
         return value ?? String()
     }
     public var boolValue: Bool {
-        return stringValue.lowercaseString == "true" || stringValue.toInt() == 1 ? true : false
+        return stringValue.lowercaseString == "true" || Int(stringValue) == 1 ? true : false
     }
     public var intValue: Int {
-        return stringValue.toInt() ?? 0
+        return Int(stringValue) ?? 0
     }
     public var doubleValue: Double {
         return (stringValue as NSString).doubleValue
@@ -120,7 +120,7 @@ public class AEXMLElement {
         return child
     }
     
-    public func addChild(#name: String, value: String? = nil, attributes: [NSObject : AnyObject] = [NSObject : AnyObject]()) -> AEXMLElement {
+    public func addChild(name name: String, value: String? = nil, attributes: [NSObject : AnyObject] = [NSObject : AnyObject]()) -> AEXMLElement {
         let child = AEXMLElement(name, value: value, attributes: attributes)
         return addChild(child)
     }
@@ -148,7 +148,7 @@ public class AEXMLElement {
     private func indentation(count: Int) -> String {
         var indent = String()
         if count > 0 {
-            for i in 0..<count {
+            for _ in 0..<count {
                 indent += "\t"
             }
         }
@@ -193,7 +193,7 @@ public class AEXMLElement {
     
     public var xmlStringCompact: String {
         let chars = NSCharacterSet(charactersInString: "\n\t")
-        return join("", xmlString.componentsSeparatedByCharactersInSet(chars))
+        return "".join(xmlString.componentsSeparatedByCharactersInSet(chars))
     }
 }
 
@@ -233,11 +233,10 @@ public class AEXMLDocument: AEXMLElement {
         }
     }
     
-    public convenience init?(version: Double = 1.0, encoding: String = "utf-8", standalone: String = "no", xmlData: NSData, processNamespaces: Bool = false, inout error: NSError?) {
+    public convenience init(version: Double = 1.0, encoding: String = "utf-8", standalone: String = "no", xmlData: NSData, processNamespaces: Bool = false) throws {
         self.init(version: version, encoding: encoding, standalone: standalone, processNamespaces: processNamespaces)
         if let parseError = readXMLData(xmlData) {
-            error = parseError
-            return nil
+            throw parseError
         }
     }
     
@@ -299,19 +298,17 @@ class AEXMLParser: NSObject, NSXMLParserDelegate {
     
     // MARK: NSXMLParserDelegate
     
-    func parser(parser: NSXMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [NSObject : AnyObject]) {
+    func parser(parser: NSXMLParser, didStartElement elementName: String, namespaceURI: String?, qualifiedName qName: String?, attributes attributeDict: [String: String]) {
         currentValue = String()
         currentElement = currentParent?.addChild(name: elementName, attributes: attributeDict)
         currentElement?.namespaceURI = namespaceURI
         currentParent = currentElement
     }
     
-    func parser(parser: NSXMLParser, foundCharacters string: String?) {
-        if string != nil {
-            currentValue += string!
-            let newValue = currentValue.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
-            currentElement?.value = newValue == String() ? nil : newValue
-        }
+    func parser(parser: NSXMLParser, foundCharacters string: String) {
+        currentValue += string
+        let newValue = currentValue.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
+        currentElement?.value = newValue == String() ? nil : newValue
     }
     
     func parser(parser: NSXMLParser, didEndElement elementName: String, namespaceURI: String?, qualifiedName qName: String?) {
