@@ -193,7 +193,7 @@ public class AEXMLElement {
     
     public var xmlStringCompact: String {
         let chars = NSCharacterSet(charactersInString: "\n\t")
-        return "".join(xmlString.componentsSeparatedByCharactersInSet(chars))
+        return xmlString.componentsSeparatedByCharactersInSet(chars).joinWithSeparator("")
     }
 }
 
