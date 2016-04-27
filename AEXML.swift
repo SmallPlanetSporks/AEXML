@@ -95,7 +95,7 @@ public class AEXMLElement {
                 var countAttributes = 0
                 for (key, value) in attributes {
                     if element.attributes[key] as? V == value {
-                        countAttributes++
+                        countAttributes += 1
                     }
                 }
                 if countAttributes == attributes.count {
@@ -139,7 +139,7 @@ public class AEXMLElement {
         var count = 0
         var element = self
         while let parent = element.parent {
-            count++
+            count += 1
             element = parent
         }
         return count
