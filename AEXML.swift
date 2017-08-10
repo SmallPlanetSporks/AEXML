@@ -88,7 +88,7 @@ public class AEXMLElement {
         return all?.count ?? 0
     }
     
-    public func allWithAttributes <K: NSObject, V: AnyObject> (_ attributes: [K : V]) -> [AEXMLElement]? where K: Equatable, V: Equatable {
+    public func allWithAttributes <K: NSObject, V: AnyObject> (_ attributes: [K : V]) -> [AEXMLElement]? where V: Equatable {
         var found = [AEXMLElement]()
         if let elements = all {
             for element in elements {
@@ -108,7 +108,7 @@ public class AEXMLElement {
         }
     }
     
-    public func countWithAttributes <K: NSObject, V: AnyObject> (_ attributes: [K : V]) -> Int where K: Equatable, V: Equatable {
+    public func countWithAttributes <K: NSObject, V: AnyObject> (_ attributes: [K : V]) -> Int where V: Equatable {
         return allWithAttributes(attributes)?.count ?? 0
     }
     
