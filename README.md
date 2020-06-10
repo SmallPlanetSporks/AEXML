@@ -1,40 +1,40 @@
+[![Swift 5.1](https://img.shields.io/badge/Swift-5.1-orange.svg?style=flat)](https://swift.org)
+[![Platforms iOS | watchOS | tvOS | macOS](https://img.shields.io/badge/Platforms-iOS%20%7C%20watchOS%20%7C%20tvOS%20%7C%20macOS-lightgray.svg?style=flat)](http://www.apple.com)
+[![CocoaPods](https://img.shields.io/cocoapods/v/AEXML.svg?style=flat)](https://cocoapods.org/pods/AEXML)
+[![Carthage](https://img.shields.io/badge/Carthage-compatible-brightgreen.svg?style=flat)](https://github.com/Carthage/Carthage)
+[![Swift Package Manager](https://img.shields.io/badge/SPM-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager)
+[![License MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg?style=flat)](https://github.com/tadija/AEXML/blob/master/LICENSE)
+
 # AEXML
-**Simple and lightweight XML parser for iOS written in Swift**
 
-> This is not robust full featured XML parser (at the moment), but rather simple,  
-and very easy to use utility for casual XML handling (it just works).
+**Swift minion for simple and lightweight XML parsing**
 
-**AEXML** is a [minion](http://tadija.net/public/minion.png) which consists of these classes:  
+> I made this for personal use, but feel free to use it or contribute.
+> For more examples check out [Sources](Sources) and [Tests](Tests).
 
-Class | Description
------------- | -------------
-`AEXMLElement` | Base class
-`AEXMLDocument` | Inherited from `AEXMLElement` with a few addons
-`AEXMLParser` | Simple (private) wrapper around `NSXMLParser`
+## Index
+- [Intro](#intro)
+- [Features](#features)
+- [Usage](#usage)
+    - [Read XML](#read-xml)
+    - [Write XML](#write-xml)
+- [Installation](#installation)
+- [License](#license)
 
+## Intro
+
+This is not a robust full featured XML parser, but rather simple, lightweight and easy to use utility for casual XML handling.
 
 ## Features
 - **Read XML** data
 - **Write XML** string
-- I believe that's all
+- Covered with [unit tests](https://github.com/tadija/AEXML/blob/master/Tests/AEXMLTests.swift)
+- Covered with inline docs
 
-
-## Index
-- [Example](#example)
-  - [Read XML](#read-xml)
-  - [Write XML](#write-xml)
-- [API](#api)
-  - [AEXMLElement](#aexmlelement)
-  - [AEXMLDocument](#aexmldocument)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [License](#license)
-
-
-## Example
+## Usage
 
 ### Read XML
-Let's say this is some XML string you picked up somewhere and made a variable `data: NSData` from that.
+Let's say this is some XML string you picked up somewhere and made a variable `data: Data` from that.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -54,80 +54,84 @@ Let's say this is some XML string you picked up somewhere and made a variable `d
 </animals>
 ```
 
-This is how you can use AEXML for working with this data:  
+This is how you can use **AEXML** for working with this data:  
 (for even more examples, look at the unit tests code included in project)
 
 ```swift
-// works only if data is successfully parsed
-// otherwise prints information about error with parsing
-var error: NSError?
-if let xmlDoc = AEXMLDocument(xmlData: data, error: &error) {
-    
+guard let
+    let xmlPath = Bundle.main.path(forResource: "example", ofType: "xml"),
+    let data = try? Data(contentsOf: URL(fileURLWithPath: xmlPath))
+else { return }
+
+do {
+    let xmlDoc = try AEXMLDocument(xml: data, options: options)
+        
     // prints the same XML structure as original
-    println(xmlDoc.xmlString)
+    print(xmlDoc.xml)
     
     // prints cats, dogs
     for child in xmlDoc.root.children {
-        println(child.name)
+        print(child.name)
     }
     
     // prints Optional("Tinna") (first element)
-    println(xmlDoc.root["cats"]["cat"].value)
-
+    print(xmlDoc.root["cats"]["cat"].value)
+    
     // prints Tinna (first element)
-    println(xmlDoc.root["cats"]["cat"].stringValue)
-
+    print(xmlDoc.root["cats"]["cat"].string)
+    
     // prints Optional("Kika") (last element)
-    println(xmlDoc.root["dogs"]["dog"].last?.value)
-
+    print(xmlDoc.root["dogs"]["dog"].last?.value)
+    
     // prints Betty (3rd element)
-    println(xmlDoc.root["dogs"].children[2].stringValue)
-
+    print(xmlDoc.root["dogs"].children[2].string)
+    
     // prints Tinna, Rose, Caesar
     if let cats = xmlDoc.root["cats"]["cat"].all {
         for cat in cats {
             if let name = cat.value {
-                println(name)
+                print(name)
             }
         }
     }
     
     // prints Villy, Spot
     for dog in xmlDoc.root["dogs"]["dog"].all! {
-        if let color = dog.attributes["color"] as? String {
+        if let color = dog.attributes["color"] {
             if color == "white" {
-                println(dog.stringValue)
+                print(dog.string)
             }
         }
     }
     
-    // prints Caesar
-    if let cats = xmlDoc.root["cats"]["cat"].allWithAttributes(["breed" : "Domestic", "color" : "yellow"]) {
+    // prints Tinna
+    if let cats = xmlDoc.root["cats"]["cat"].all(withValue: "Tinna") {
         for cat in cats {
-            println(cat.stringValue)
+            print(cat.string)
+        }
+    }
+    
+    // prints Caesar
+    if let cats = xmlDoc.root["cats"]["cat"].all(withAttributes: ["breed" : "Domestic", "color" : "yellow"]) {
+        for cat in cats {
+            print(cat.string)
         }
     }
     
     // prints 4
-    println(xmlDoc.root["cats"]["cat"].count)
-    
-    // prints 2
-    println(xmlDoc.root["dogs"]["dog"].countWithAttributes(["breed" : "Bull Terrier"]))
-    
-    // prints 1
-    println(xmlDoc.root["cats"]["cat"].countWithAttributes(["breed" : "Domestic", "color" : "darkgray"]))
+    print(xmlDoc.root["cats"]["cat"].count)
     
     // prints Siberian
-    println(xmlDoc.root["cats"]["cat"].attributes["breed"]!)
+    print(xmlDoc.root["cats"]["cat"].attributes["breed"]!)
     
     // prints <cat breed="Siberian" color="lightgray">Tinna</cat>
-    println(xmlDoc.root["cats"]["cat"].xmlStringCompact)
+    print(xmlDoc.root["cats"]["cat"].xmlCompact)
     
-    // prints element <badexample> not found
-    println(xmlDoc["badexample"]["notexisting"].stringValue)
-    
-} else {
-    println("description: \(error?.localizedDescription)\ninfo: \(error?.userInfo)")
+    // prints Optional(AEXML.AEXMLError.elementNotFound)
+    print(xmlDoc["NotExistingElement"].error)
+}
+catch {
+    print("\(error)")
 }
 ```
 
@@ -152,7 +156,7 @@ Well, you could just build ordinary string for that?
 Yes, but, you can also do it in a more structured and elegant way with AEXML:
 
 ```swift
-// prints the same XML structure as original
+// create XML Document
 let soapRequest = AEXMLDocument()
 let attributes = ["xmlns:xsi" : "http://www.w3.org/2001/XMLSchema-instance", "xmlns:xsd" : "http://www.w3.org/2001/XMLSchema"]
 let envelope = soapRequest.addChild(name: "soap:Envelope", attributes: attributes)
@@ -161,81 +165,30 @@ let body = envelope.addChild(name: "soap:Body")
 header.addChild(name: "m:Trans", value: "234", attributes: ["xmlns:m" : "http://www.w3schools.com/transaction/", "soap:mustUnderstand" : "1"])
 let getStockPrice = body.addChild(name: "m:GetStockPrice")
 getStockPrice.addChild(name: "m:StockName", value: "AAPL")
-println(soapRequest.xmlString)
+
+// prints the same XML structure as original
+print(soapRequest.xml)
 ```
 
-
-## API
-
-### AEXMLElement
-`class AEXMLElement`
-
-Property | Description
------------- | -------------
-`var parent: AEXMLElement?` | `readonly` parent XML element - every `AEXMLElement` has it's parent, instead of `AEXMLDocument` :(
-`var children: [AEXMLElement] = [AEXMLElement]()` | `readonly` child XML elements
-`let name: String` | XML element name
-`var attributes: [NSObject : AnyObject]` | `readonly` XML element attributes
-`var value: String?` | XML element value (stored value property, others are computed)
-`var stringValue: String` | if `value` is nil, this is empty string, otherwise `value`
-`var boolValue: Bool` | `stringValue` converted to `Bool` (if stringValue is "true" (case insensitive) or "1" then it's true, otherwise false)
-`var intValue: Int` | `stringValue` converted to `Int` (if stringValue can't be converted it's 0)
-`var doubleValue: Double` | `stringValue` converted to `Double` (if stringValue can't be converted it's 0.0)
-`public class var errorElementName: String` | this element name is used when unable to find element
-
-Initializer | Description
------------- | -------------
-`init(_ name: String, value: String? = nil, attributes: [NSObject : AnyObject] = [NSObject : AnyObject]())` | designated initializer has default values for **value** and **attributes**, but **name** is required
-
-Read XML | Description
------------- | -------------
-`subscript(key: String) -> AEXMLElement` | get the **first** element with given name (`xmlDoc["someName"]`), it's non-optional so it returns dummy element if element with given name is not found
-`var all: [AEXMLElement]?` | all of the elements with name as `self.name`
-`var first: AEXMLElement?` | the first element with name as `self.name` (same as subscript but optional)
-`var last: AEXMLElement?` | last element with name as `self.name`
-`var count: Int` | count of elements with name as `self.name`
-`func allWithAttributes <K: NSObject, V: AnyObject where K: Equatable, V: Equatable> (attributes: [K : V]) -> [AEXMLElement]?` | child elements which contain given `attributes`
-`func countWithAttributes<K: NSObject, V: AnyObject where K: Equatable, V: Equatable>(attributes: [K : V]) -> Int` | count of child elements which contain given `attributes`
-
-Write XML | Description
------------- | -------------
-`func addChild(child: AEXMLElement) -> AEXMLElement` | add child to `self.children` (then return that child)
-`func addChild(#name: String, value: String? = nil, attributes: [NSObject : AnyObject] = [NSObject : AnyObject]()) -> AEXMLElement` | add child to `self.children` (then return that child)
-`func addAttribute(name: NSObject, value: AnyObject)` | add attribute to `self.attributes`
-`func addAttributes(attributes: [NSObject : AnyObject])` | add attributes to `self.attributes`
-`var xmlString: String` | complete hierarchy of `self` and `children` in XML formatted String
-`var xmlStringCompact: String` | same as `xmlString` but without `\n` and `\t` characters
-
-
-### AEXMLDocument
-`class AEXMLDocument: AEXMLElement`
-
-Property | Description
------------- | -------------
-`let version: Double` | used only for the first line in `xmlString`
-`let encoding: String` | used only for the first line in `xmlString`
-`let standalone: String` | used only for the first line in `xmlString`
-`var root: AEXMLElement` | the first child element of XML document
-
-Initializer | Description
------------- | -------------
-`init(version: Double = 1.0, encoding: String = "utf-8", standalone: String = "no", root: AEXMLElement? = nil)` | designated initializer with default values for all of the properties
-`convenience init?(version: Double = 1.0, encoding: String = "utf-8", standalone: String = "no", xmlData: NSData, inout error: NSError?)` | convenience initializer also automatically calls **readXMLData** with given `NSData`
-
-Parse XML | Description
------------- | -------------
-`func readXMLData(data: NSData) -> NSError?` | create instance of `AEXMLParser` and start parsing given XML data, return `NSError` if parsing is not successfull, otherwise `nil`
-
-
-## Requirements
-- Xcode 6.1.1
-- iOS 7.0+
-- AEXML doesn't require any additional libraries for it to work.
-
-
 ## Installation
-Just drag AEXML.swift into your project and start using it.
 
+- [Swift Package Manager](https://swift.org/package-manager/):
+
+	```swift
+    .package(url: "https://github.com/tadija/AEXML.git", from: "4.5.0")
+	```
+
+- [Carthage](https://github.com/Carthage/Carthage):
+
+	```ogdl
+	github "tadija/AEXML"
+	```
+
+- [CocoaPods](http://cocoapods.org/):
+
+	```ruby
+	pod 'AEXML'
+	```
 
 ## License
 AEXML is released under the MIT license. See [LICENSE](LICENSE) for details.
