@@ -31,6 +31,9 @@ open class AEXMLElement {
     /// XML Element value.
     open var value: String?
     
+    /// XML Namespace.
+    open var namespaceURI: String?
+    
     /// XML Element attributes.
     open var attributes: [String : String]
     

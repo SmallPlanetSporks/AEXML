@@ -64,6 +64,7 @@ internal class AEXMLParser: NSObject, XMLParserDelegate {
                 attributes attributeDict: [String : String]) {
         currentValue = String()
         currentElement = currentParent?.addChild(name: elementName, attributes: attributeDict)
+        currentElement?.namespaceURI = namespaceURI
         currentParent = currentElement
     }
     
@@ -79,6 +80,7 @@ internal class AEXMLParser: NSObject, XMLParserDelegate {
         if parserSettings.shouldTrimWhitespace {
             currentElement?.value = currentElement?.value?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
+            currentElement?.namespaceURI = namespaceURI
         }
         currentParent = currentParent?.parent
         currentElement = nil
